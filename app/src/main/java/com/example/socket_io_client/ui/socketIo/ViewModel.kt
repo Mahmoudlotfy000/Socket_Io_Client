@@ -1,80 +1,122 @@
 package com.example.socket_io_client.ui.socketIo
 
 import android.util.Log
-import io.socket.client.Socket
 import io.socket.client.IO
-import kotlin.math.log
+import io.socket.client.Socket
 
-class ChatClient(private val username: String) {
-    private val socket: Socket = IO.socket("https://tracking.dev.mdawm.com")
+object SocketIOManager {
+
+
+    private var socket: Socket? = null
+
     fun connect() {
-        socket.connect()
+        try {
+            val options = IO.Options()
+            options.reconnection = true
+            options.timeout = 5000
 
-        socket.on(Socket.EVENT_CONNECT) {
-            println("Connected to server")
-            Log.d(" connect to server ","Connected to server");
-            socket.emit("chat message", "$username joined the chat")
+            socket = IO.socket("https://tracking.dev.mdawm.com/ws", options)
+
+            socket?.on(Socket.EVENT_CONNECT) {
+                // Handle connection success
+                println("Socket connected")
+                Log.d("connect to server", "Connected to server")
+            }?.on(Socket.EVENT_DISCONNECT) {
+                // Handle disconnection
+                println("Socket disconnected")
+                Log.d("stop connect", "Stop Connected to server")
+            }?.on(Socket.EVENT_RECONNECTING) {
+                // Handle reconnection
+                println("Socket Reconnecting")
+                Log.d("Reconnect", "Reconnecting to server")
+            }?.on(Socket.EVENT_CONNECT_ERROR) {
+                // Handle connection error
+                println("Socket connection error")
+                Log.d("Error Connect", "Error connecting to server")
+            }
+
+            socket?.connect()
+            Log.d(" Success ", "Connected to server Success ")
+
+        } catch (e: Exception) {
+            e.printStackTrace()
+            Log.d(" Error", e.toString())
+
         }
-
-        socket.on("chat message") { args ->
-            val message = args[0] as String
-            println("Received message: $message")
-
-        }
-
-        socket.on(Socket.EVENT_DISCONNECT) {
-            println("Disconnected from server")
-            Log.d(" disconnect","DisConnected to server");
-        }
-
-        sendMessage(message = "connect Success")
-    }
-
-    private fun sendMessage(message: String) {
-        socket.emit("chat message", "$username: $message")
     }
 
     fun disconnect() {
-        socket.disconnect()
-        sendMessage(message = "connect stop")
-        Log.d(" stop connect","Stop Connected to server");
+        socket?.disconnect()
+        Log.d(" Disconnect", "DisConnected to server")
     }
+
+    fun sendMessage(message: String) {
+        socket?.emit("chat message", message)
+    }
+
+
 }
 
-//fun main() {
-//    val client = ChatClient("Alice")
-//    client.connect()
-//
-//    Thread.sleep(1000) // Give some time for connection to establish
-//
-//    client.sendMessage("Hello, everyone!")
-//
-//    Thread.sleep(3000) // Allow time to receive messages
-//
-//    client.disconnect()
-//}
 
-
-//import io.socket.client.IO
-//import io.socket.client.Socket
-//import io.socket.emitter.Emitter
+//object SocketIOManager {
+//    private var socket: Socket? = null
 //
-//fun main() {
-//    val options = IO.Options.builder()
-//        .setForceNew(true)
-//        .build()
+//    init {
+//        connect()
+//    }
 //
-//    val socket = IO.socket("http://example.com", options)
+//    private fun createSocket(): Socket? {
+//        try {
+//            val options = IO.Options()
+//            options.reconnection = true
+//            options.timeout = 10000
 //
-//    socket.on(Socket.EVENT_CONNECT, Emitter.Listener {
-//        println("Connected to server")
-//        socket.emit("chat message", "Hello, Socket.IO!")
-//    }).on("chat message", Emitter.Listener { args ->
-//        val message = args[0] as String
-//        println("Received: $message")
-//    }).on(Socket.EVENT_DISCONNECT, Emitter.Listener {
-//        println("Disconnected from server")
-//    })
+//            return IO.socket("https://tracking.dev.mdawm.com/ws", options)
+//        } catch (e: Exception) {
+//            e.printStackTrace()
+//            Log.d("Error", e.toString())
+//        }
+//        return null
+//    }
 //
-//    socket.connect()
+//
+//    private fun setupSocketEvents() {
+//        socket?.on(Socket.EVENT_CONNECT) {
+//            println("Socket connected")
+//            Log.d("connect to server", "Connected to server")
+//        }?.on(Socket.EVENT_DISCONNECT) {
+//            println("Socket disconnected")
+//            Log.d("stop connect", "Disconnected from server")
+//        }?.on(Socket.EVENT_RECONNECTING) {
+//            println("Socket Reconnecting")
+//            Log.d("Reconnect", "Reconnecting to server")
+//        }?.on(Socket.EVENT_CONNECT_ERROR) { args ->
+//            val errorMessage = if (args.isNotEmpty()) args[0] as? String else "Unknown error"
+//            println("Socket connection error: $errorMessage")
+//            Log.d("Error Connect", "Error connecting to server: $errorMessage")
+//        }?.on(Socket.EVENT_CONNECT_TIMEOUT) {
+//            println("Socket connection timeout")
+//            Log.d("Error Connect", "Connection timeout")
+//        }?.on(Socket.EVENT_ERROR) { args ->
+//            val error = if (args.isNotEmpty()) args[0] as? Exception else null
+//            println("Socket general error: $error")
+//            Log.d("Error Connect", "General error: $error")
+//        }
+//    }
+//
+//    fun connect() {
+//        socket = createSocket()
+//        setupSocketEvents()
+//        socket?.connect()
+//        Log.d("Success", "Connected to server Success")
+//    }
+//
+//    fun disconnect() {
+//        socket?.disconnect()
+//        Log.d("Disconnect", "Disconnected from server")
+//    }
+//
+//    fun sendMessage(message: String) {
+//        socket?.emit("chat message", message)
+//    }
 //}
